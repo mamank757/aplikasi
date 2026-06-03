@@ -1576,108 +1576,6 @@ if (!document.getElementById('appMessageStyle')) {
                 }
             }
         }
-        async function startBWDCamera() {
-            const video = document.getElementById('videoElement');
-            try {
-                // Diupdate untuk menyimpan stream ke variabel global
-                currentStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } 
-                });
-                video.srcObject = currentStream;
-                video.onloadedmetadata = () => {
-                    video.play().catch(e => console.error("Gagal play video:", e));
-                };
-            } catch (err) {
-                console.error(err);
-                alert("Akses kamera ditolak atau tidak didukung di perangkat ini!");
-            }
-        }
-
-        document.getElementById('btnCapture').addEventListener('click', async () => {
-    const video = document.getElementById('videoElement');
-    const canvas = document.getElementById('hiddenCanvas');
-    const ctx = canvas.getContext('2d');
-    const btn = document.getElementById('btnCapture');
-
-    // Pastikan video sedang berjalan dan kamera aktif
-    if (!video.videoWidth || !currentStream) {
-        alert("Kamera belum siap, mohon tunggu sebentar.");
-        return;
-    }
-
-    // Ambil ukuran asli frame video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
-
-    // Resize gambar agar pengiriman ke server lebih ringan dan cepat
-    const exportCanvas = document.createElement('canvas');
-    const exportCtx = exportCanvas.getContext('2d');
-    const targetWidth = 800; // Resolusi aman untuk AI Roboflow
-    exportCanvas.width = targetWidth;
-    exportCanvas.height = (video.videoHeight * targetWidth) / video.videoWidth;
-    
-    // Tambahkan filter brightness & contrast sedikit agar AI lebih akurat membaca warna
-    exportCtx.filter = 'brightness(1.05) contrast(1.1)';
-    exportCtx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
-
-    // Ubah gambar menjadi format base64
-    const base64Img = exportCanvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-
-    // --- TAMPILKAN PREVIEW FOTO ---
-    const previewImg = document.getElementById('bwdPreviewImage');
-    if (previewImg) {
-        previewImg.src = canvas.toDataURL('image/jpeg'); 
-        previewImg.style.display = 'block';
-    }
-    
-    // Sembunyikan kotak fokus hijau agar tidak menimpa hasil jepretan di layar
-    const focusBox = document.getElementById('focusBox');
-    if (focusBox) focusBox.style.display = 'none';
-
-    // Ubah status tombol UI menjadi loading
-    const originalText = btn.innerText;
-    btn.innerHTML = "MENGANALISIS AI..."; 
-    btn.disabled = true;
-    btn.style.opacity = "0.7";
-    
-    const outputDiv = document.getElementById('outputBWD');
-    outputDiv.innerHTML = `
-        <div style="text-align: center; color: var(--accent-bwd); font-size: 0.85rem; margin-top: 15px;">
-            <div class="animasi-loading-kalender" style="color:var(--accent-bwd);">Menganalisis tingkat Nitrogen daun...</div>
-        </div>`;
-
-    try {
-        // Kirim HTTP POST ke Web App Google Apps Script BWD
-        const res = await fetch(URL_BWD, {
-            method: 'POST',
-            body: JSON.stringify({ image: base64Img })
-        });
-        
-        const data = await res.json();
-        
-        // Hentikan kamera perangkat untuk menghemat baterai HP
-        stopCamera();
-        
-        // Teruskan data ke fungsi global penampil hasil AI
-        currentMode = 'bwd';
-        tampilkanHasil(data);
-
-    } catch (err) {
-        console.error(err);
-        outputDiv.innerHTML = `<div class="error" style="display:block; text-align:center;">Gagal memproses gambar. Periksa koneksi internet atau URL Apps Script.</div>`;
-        
-        // Jika terjadi error (misal sinyal putus), kembalikan UI ke mode kamera live
-        if (previewImg) previewImg.style.display = 'none';
-        if (focusBox) focusBox.style.display = 'block';
-        
-    } finally {
-        // Kembalikan tombol ke kondisi semula
-        btn.innerText = originalText;
-        btn.disabled = false;
-        btn.style.opacity = "1";
-    }
-});
         async function mulaiAnalisis() {
     const btnAnalisis = document.getElementById('btnAnalisis');
 
@@ -4070,20 +3968,24 @@ function tambahkanPesanLayar(pengirim, teks, warnaAksen) {
 
     areaPesan.scrollTop = areaPesan.scrollHeight;
 }
-
-function startBWDCamera() {
+// Fungsi Kamera BWD yang sudah disempurnakan (Gabungan)
+async function startBWDCamera() {
     const video = document.getElementById('videoElement');
     if (!video) return;
 
-    navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "environment" } 
-    })
-    .then(stream => {
-        currentStream = stream;
-        video.srcObject = stream;
-    })
-    .catch(err => {
+    try {
+        currentStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment' } // Memaksa pakai kamera belakang
+        });
+        
+        video.srcObject = currentStream;
+        
+        // Memastikan video terputar dengan baik di semua jenis HP (Android/iOS)
+        video.onloadedmetadata = () => {
+            video.play().catch(e => console.error("Gagal play video:", e));
+        };
+    } catch (err) {
         console.error("Camera error:", err);
-        alert("Gagal mengakses kamera. Pastikan izin kamera diberikan.");
-    });
+        alert("Gagal mengakses kamera. Pastikan izin kamera diberikan pada browser.");
+    }
 }
