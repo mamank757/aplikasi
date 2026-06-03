@@ -5,41 +5,543 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
-    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/leaflet-image@0.4.0/leaflet-image.js"></script>
+    
     <meta name="theme-color" content="#0b1528">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>PPL Milenial Wajo - Smart Farming</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+   
 </head>
 <body>
 
-    <div class="sticky-header">
-        <div class="header">
-            <h1>SMART FARMING - IOT</h1>
-            <p>Internet of Things. Developed by PPL MILENIAL WAJO</p>
-        </div>
+    <!-- GANTI BAGIAN STICKY-TOP INI -->
+<div class="sticky-header">
+    <div class="header">
+        <h1>SMART FARMING - IOT</h1>
+        <p>Internet of Things. Developed by PPL MILENIAL WAJO</p>
     </div>
+</div>
 
-    <div id="customAlertModal">
-        <div class="modal-card">
+<div class="tab-container">
+    <button class="tab-btn" id="tabCuaca" onclick="switchMode('cuaca')">RISIKO CUACA</button>
+    <button class="tab-btn" id="tabKalender" onclick="switchMode('kalender')">RISIKO IKLIM</button>
+    <button class="tab-btn" id="tabBiaya" onclick="switchMode('biaya')">BIAYA TANI</button>
+    <button class="tab-btn" id="tabUkur" onclick="switchMode('ukur')">UKUR LAHAN</button>
+    <button class="tab-btn" id="tabVarietas" onclick="switchMode('varietas')">VARIETAS PADI</button>
+    <button class="tab-btn" id="tabPupuk" onclick="switchMode('pupuk')">DOSIS PUPUK</button> 
+    <button class="tab-btn" id="tabBWD" onclick="switchMode('bwd')">UJI BWD UREA</button>
+    <button class="tab-btn" id="tabTanah" onclick="switchMode('tanah')">FISIK TANAH</button>
+    <button class="tab-btn" id="tabMalai" onclick="switchMode('malai')">HASIL PANEN</button>
+    <button class="tab-btn" id="tabHama" onclick="switchMode('hama')">HAMA PADI</button>
+    <button class="tab-btn" id="tabDaun" onclick="switchMode('daun')">PENYAKIT PADI</button>
+    <button class="tab-btn" id="tabGulma" onclick="switchMode('gulma')">JENIS GULMA</button>
+    <button class="tab-btn" id="tabChat1" onclick="toggleChatbox(1)">KONSULTASI 1</button>
+    <button class="tab-btn" id="tabChat2" onclick="toggleChatbox(2)">KONSULTASI 2</button>
+    <button class="tab-btn" id="tabChat3" onclick="toggleChatbox(3)">KONSULTASI 3</button>
+    <button class="tab-btn" id="tabChat4" onclick="toggleChatbox(4)">KONSULTASI 4</button>
+</div>
+
+    <div class="card">
+        <h3 id="modeTitle">Deteksi Penyakit Padi</h3>
+        <div id="tabSubtitleDisplay" class="tab-subtitle" style="display:none;"></div>
+          
+        <div id="formParameterLahan" class="form-lahan" style="display: none;">
+            <div class="form-group">
+                <label>🌾 METODE TANAM / POPULASI</label>
+                <select id="metodeTanam" onchange="updateEstimasiKepadatan()">
+                    <option value="tapin">Tanam Pindah (±25 rumpun/m²)</option>
+                    <option value="legowo">Jajar Legowo 2:1 atau 4:1 (±33 rumpun/m²)</option>
+                    <option value="tabela_larikan">Tanam Benih Langsung Larikan / Drum Seeder (±40 rumpun/m²)</option>
+                    <option value="tabela_hambur">Tanam Benih Langsung Hambur / Sere (±60 rumpun/m²)</option>
+                    <option value="custom">atau Input Kepadatan...</option>
+                </select>
             </div>
-    </div>
+            <div id="customPopulasiBox" class="form-group" style="display: none;">
+                <label>Jumlah Rumpun / Populasi Per m²</label>
+                <input type="number" id="manualRumpun" value="25" min="1">
+            </div>
+            <div class="form-group">
+                <label>🌱 UMUR / JENIS VARIETAS (BOBOT GABAH)</label>
+                <select id="jenisVarietas">
+                    <option value="genjah">Genjah (Cakrabuana, M70D, dll) - Pengisian Cepat</option>
+                    <option value="sedang">Sedang (Ciherang, Mekongga, Inpari 32, dll) - Menengah</option>
+                    <option value="dalam">Dalam / Lokal (Padi Hitam, Varietas Lokal/Luar) - Pengisian Panjang</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>🌾 RATA-RATA JUMLAH MALAI PER RUMPUN</label>
+                <input type="number" id="malaiPerRumpun" value="16" min="1">
+            </div>
+        </div>
 
+<div id="boxKalender" style="display: none;">
+    <div class="info-box" style="border-left-color: var(--accent-kalender); margin-bottom: 20px; background: rgba(217, 70, 239, 0.05);">
+        <strong>Integrasi Fase Tumbuh & Cuaca</strong><br>
+        <span style="font-size: 0.8rem; color: #cbd5e1;">Masukkan estimasi awal tanam. Sistem akan memetakan risiko gagal panen berdasarkan tabrakan fase kritis dengan prediksi musim.</span>
+    </div>
+    
+    <div class="form-group">
+        <label>📅 TANGGAL AWAL TANAM</label>
+        <input type="date" id="inputTglTanam" class="form-input">
+    </div>
+    <div class="form-group">
+    <label>🌱 UMUR VARIETAS PADI</label>
+    <select id="umurVarietasKalender" class="form-select">
+        <option value="genjah">Genjah (< 95 Hari)</option>
+        <option value="sedang" selected>Sedang (95 - 115 Hari)</option>
+        <option value="dalam">Dalam (>= 116 Hari)</option>
+    </select>
+</div>
+    <button class="btn-main" style="background: var(--accent-kalender); color: #fff;" onclick="prosesAnalisisKalender()">
+        🚀 TAMPILKAN GRAFIK ANCAMAN IKLIM
+    </button>
+    
+    <div id="hasilProyeksiIklim" style="display: none; margin-top: 24px;">
+        <h4 style="color: #fff; margin-bottom: 12px; font-size: 1rem; text-align: center;">📈 Grafik Risiko Gagal Panen</h4>
+        <div style="position: relative; width: 100%; height: 260px; background: #111c2e; padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); box-sizing: border-box;">
+            <canvas id="kalenderChart"></canvas>
+        </div>
+        <div id="teksAnalisisFase" style="margin-top: 20px; display: flex; flex-direction: column; gap: 12px;"></div>
+    </div>
+</div>
+        <div id="boxVarietasPadi" style="display: none;">
+            <div class="form-group">
+                <label>🌧️ CURAH HUJAN WILAYAH</label>
+                <select id="input-hujan-var" class="form-select">
+                    <option value="">-- Pilih Curah Hujan --</option>
+                    <option value="rendah">Rendah (Kering)</option>
+                    <option value="normal">Normal / Sedang</option>
+                    <option value="tinggi">Tinggi (Basah)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>⛰️ TIPE HAMPARAN LAHAN</label>
+                <select id="input-lahan-var" class="form-select">
+                    <option value="">-- Pilih Tipe Lahan --</option>
+                    <option value="irigasi">Lahan Irigasi Teknis</option>
+                    <option value="tadah hujan">Lahan Tadah Hujan</option>
+                    <option value="rawa">Lahan Rawa / Lebak</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>⛰️ TARGET UMUR PANEN (HARI)</label>
+                <input type="number" id="input-umur-var" class="form-input" min="70" max="150" placeholder="Contoh: 110">
+            </div>
+            <button class="btn-main" style="background: var(--accent-green); color: #000; margin-bottom: 12px;" onclick="analisisVarietasPadi()">
+                🚀 CARI REKOMENDASI VARIETAS
+            </button>
+
+            <button id="btnKirimWAVarietas" class="btn-main" style="display: none; background: #25D366; color: #fff; margin-top: 0; margin-bottom: 12px;" onclick="kirimVarietasKeWhatsApp()">
+                💬 KIRIM/SIMPAN HASIL KE WA
+            </button>
+
+            <div id="outputHasilVarietas" class="info-box" style="display:none; border-left-color: var(--accent-green); background: rgba(0, 255, 157, 0.02); margin-top: 20px;"></div>
+            <button id="btnCopyVarietas" class="btn-main" style="display: none; background: rgba(255, 255, 255, 0.06); color: #fff; border: 1px solid rgba(255,255,255,0.1);" onclick="copyHasilVarietas()">
+                📋 SALIN DATA REKOMENDASI
+            </button>
+        </div>
+        <!-- BOX UKUR LUAS LAHAN (POSISI BENAR) -->
+        <div id="boxUkurLahan" style="display: none;">
+            <div class="info-box" style="border-left-color: #22d3ee; background: rgba(34, 211, 238, 0.08);">
+                
+                <small>Gambar di peta atau jalan keliling lahan menggunakan GPS</small>
+            </div>
+
+            <div style="margin: 15px 0; display: flex; gap: 8px;">
+                <button class="btn-main" id="btnPetaMode" style="background:#22d3ee; flex:1;" onclick="modePeta()">
+                    🗺️ Gambar di Peta
+                </button>
+                <button class="btn-main" id="btnJalanMode" style="background:#eab308; flex:1;" onclick="modeJalan()">
+                    🚶 Jalan Keliling
+                </button>
+            </div>
+
+            <button id="btnSelesaiJalan" class="btn-main" style="display:none; background:#10b981; margin: 8px 0 12px 0; width: 100%;" onclick="selesaiJalan()">
+                ✅ SELESAI BERKELILING LAHAN
+            </button>
+
+            <div id="mapContainer" style="height: 380px; border-radius: 20px; overflow: hidden; border: 2px solid rgba(255,255,255,0.1); margin-bottom: 15px;"></div>
+
+            <div id="ukurResult" class="info-box" style="display:none; border-left-color: #22d3ee;">
+                <strong>📏 Hasil Pengukuran:</strong><br>
+                <span id="luasDisplay" style="font-size: 1.4rem; font-weight: 800; color:#22d3ee;"></span>
+                <br><small id="luasDetail"></small>
+            </div>
+
+           <button class="btn-main" onclick="resetPengukuran()" 
+    style="background:#d64253; margin-top: 10px;">
+    🔄 Mulai Ulang Pengukuran
+</button>
+
+<button class="btn-main" onclick="simpanGambarPeta()" 
+    style="background:#3b82f6; margin-top: 8px;">
+    📸 Simpan Gambar Peta
+</button>
+
+<button class="btn-main" onclick="kirimLuasKeWA()" 
+    style="background:#25D366; margin-top: 8px;">
+    💬 Kirim ke WhatsApp
+</button>
+        </div>
+        
+        <div id="boxKalkulatorPupuk" style="display: none;">
+            <div class="form-group">
+                <label>📍 CARI KECAMATAN</label>
+                <input type="text" id="kecInput" class="form-input" list="listKec" placeholder="Memuat data wilayah...">
+                <datalist id="listKec"></datalist>
+            </div>
+            <div class="form-group">
+                <label>📐 LUAS LAHAN (HA)</label>
+                <input type="number" id="luasPupuk" class="form-input" placeholder="Contoh: 1.65" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+                <label>⛰️ JENIS TOPOGRAFI LAHAN</label>
+                <select id="lahanTopografi" class="form-select">
+                    <option value="bukit">Bukit (Dataran Tinggi)</option>
+                    <option value="lembah">Lembah (Dataran Rendah)</option>
+                    <option value="rawa">Rawa / Daerah Aliran Sungai</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>📅 TANGGAL TANAM</label>
+                <input type="date" id="tanggalTanam" class="form-input">
+            </div>
+            <button class="btn-main" style="background: var(--accent-pupuk); color: #000; margin-bottom: 12px;" onclick="hitungRekomendasiPupuk()">
+                🚀 HITUNG DOSIS PUPUK
+            </button>
+            <button class="btn-main" style="background: #25D366; color: #fff; margin-top: 0;" onclick="kirimHasilKeWhatsApp()">
+                💬 KIRIM/SIMPAN HASIL
+            </button>
+            <div id="outputHasilPupuk" class="info-box" style="display:none; border-left-color: var(--accent-pupuk); background: rgba(34, 197, 94, 0.02); margin-top: 20px;"></div>
+        </div>
+
+        <div id="boxBiayaTani" style="display: none;">
+            <label class="form-label">Luas Lahan (Ha)</label>
+            <input type="number" id="luas" class="form-input" step="0.01" min="0" placeholder="Contoh: 1.5">
+            <small id="errLuas" class="error">❗ Wajib angka & tidak boleh kosong</small>
+
+            <div class="sub-header-biaya">1. Benih & Pupuk</div>
+            <label class="form-label">Sistem Tanam</label>
+            <select id="sistem" class="form-select">
+                <option value="30">Tanam Pindah (30 kg/Ha)</option>
+                <option value="35">Tanam Pindah (35 kg/Ha)</option>
+                <option value="40">Tanam Pindah (40 kg/Ha)</option>
+                <option value="50">Tanam Benih Langsung (50 kg/Ha)</option>
+                <option value="75">Tanam Benih Langsung (75 kg/Ha)</option>
+                <option value="100">Tanam Benih Langsung (100 kg/Ha)</option>
+            </select>
+
+            <label class="form-label">Dosis Urea (kg/Ha)</label>
+            <select id="dosisUrea" class="form-select">
+                <option>50</option><option>75</option><option>100</option>
+                <option>125</option><option>150</option><option selected>175</option>
+                <option>200</option><option>225</option><option>250</option>
+                <option>275</option><option>300</option><option>325</option>
+                <option>350</option><option>375</option><option>400</option>
+            </select>
+
+            <label class="form-label">Dosis NPK (kg/Ha)</label>
+            <select id="dosisNPK" class="form-select">
+                <option>50</option><option>75</option><option>100</option>
+                <option>125</option><option>150</option><option>175</option>
+                <option>200</option><option>225</option><option>250</option>
+                <option>275</option><option>300</option><option>325</option>
+                <option>350</option><option selected>375</option><option>400</option>
+            </select>
+
+             <div class="sub-header-biaya">2. Biaya Lain (Jumlah Rp)</div>
+            <input type="text" id="pestisida" class="form-input" placeholder="🧴 Pestisida, Booster, atau bahan lainnya" oninput="formatRupiah(this)">
+            <input type="text" id="tenaga_olah" class="form-input" placeholder="🚜 Olah Lahan (Traktor/Bajak sawah)" oninput="formatRupiah(this)">
+            <input type="text" id="tenaga_panen" class="form-input" placeholder="⚙️ Biaya Mesin Combine Pemotong" oninput="formatRupiah(this)">
+            <input type="text" id="biaya_pengairan" class="form-input" placeholder="💧 Biaya Pengairan (BBM / Pompa Air)" oninput="formatRupiah(this)">
+            <input type="text" id="biaya_tenaga_kerja" class="form-input" placeholder="👥 Upah Kerja Lapangan (Tanam / Matun)" oninput="formatRupiah(this)">
+            <input type="text" id="biaya_angkut" class="form-input" placeholder="🚚 Biaya Angkut Pasca Panen (Langsir)" oninput="formatRupiah(this)">
+            <input type="text" id="lain" class="form-input" placeholder="🧾 Lainnya" oninput="formatRupiah(this)">
+
+            <div class="sub-header-biaya">3. Hasil Panen</div>
+            <input type="number" id="hasil" class="form-input" placeholder="🪣 Produksi (Kg) Cth. 6 Ton: 6000">
+            <input type="text" id="harga" class="form-input" placeholder="💵 Harga Gabah (Rp) Cth: 6.500" oninput="formatRupiah(this)">
+
+            <button class="btn-main btn-biaya" onclick="hitungBiayaTani()">🚀 Hitung Analisis Usaha</button>
+            <div class="info-box" id="outputBiaya" style="display:none; border-left-color: var(--accent-biaya);"></div>
+        </div>
+          
+        <input type="file" id="fileInput" accept="image/*" hidden onchange="handleFile(event)">
+        <button id="btnCamera" class="btn-main btn-camera" onclick="bukaKamera()">📸 AMBIL FOTO / GALERI</button>
+
+        <div id="cameraWarning" style="display:none; color: var(--accent-soil); font-size: 0.75rem; text-align: center; margin: 10px 0; font-weight: 600; padding: 8px; border: 1px solid var(--accent-soil); border-radius: 8px;">
+            ⚠️ Ambil foto 30-50cm dari target/objek agar hasil akurat
+        </div>
+
+        <div class="scan-window" id="scanWindow">
+            <div class="laser-line" id="laser"></div>
+            <p id="msg" style="font-size: 0.8rem; opacity: 0.4; font-weight: 500;">Pratinjau foto sampel</p>
+            <img id="preview" alt="Preview">
+        </div>
+
+        <button id="btnAnalisis" class="btn-main" style="display: none;" onclick="mulaiAnalisis()">🚀 MULAI ANALISIS</button>
+        <div id="loader" style="display:none;">📡 MENGANALISIS...</div>
+
+        <div id="result">
+            <div id="resLabel" style="font-size: 1.2rem; font-weight: 800; color: var(--accent-green); text-align: center;">-</div>
+            <div id="resConf" class="info-box" style="border-left-color: var(--accent-kalender); background: rgba(217, 70, 239, 0.05); text-align: center; margin-bottom: 20px;">
+    </div>
+             
+            <div id="boxPenyakit" style="display:none;">
+    <div class="info-box" style="border-left-color:var(--red-alert); background: rgba(239, 68, 68, 0.05);">
+        <strong>⚠️ Tingkat Risiko / Keparahan:</strong><br>
+        <span id="resRisiko" style="font-size: 1.1rem; font-weight: 800;">-</span>
+    </div>
+    
+    <div class="info-box"><strong>🔍 Gejala:</strong><br><span id="resGejala">-</span></div>
+                <div class="info-box" style="border-left-color:var(--red-alert);"><strong>🧬 Penyebab:</strong><br><span id="resPenyebab">-</span></div>
+                <div class="info-box" style="border-left-color:var(--accent-soil);"><strong>✅ Solusi:</strong><br><span id="resSolusi">-</span></div>
+                <div class="info-box" style="border-left-color:var(--accent-soil);"><strong>✅ Merek Produk:</strong><br><span id="resMerek">-</span></div>
+                <div class="info-box" style="border-left-color:var(--accent-soil);"><strong>✅ Waktu Aplikasi:</strong><br><span id="resAplikasi">-</span></div>
+            </div>
+
+            <div id="boxHama" style="display:none;">
+    <div class="info-box" style="border-left-color:var(--red-alert); background: rgba(239, 68, 68, 0.05);">
+        <strong>⚠️ Status Ledakan / Risiko:</strong><br>
+        <span id="resRisikoHama" style="font-size: 1.1rem; font-weight: 800;">-</span>
+    </div>
+    
+    <div class="info-box" style="border-left-color: var(--accent-hama);"><strong>🔍 Gejala Serangan di Sawah:</strong><br><span id="resGejalaHama">-</span></div>
+                <div class="info-box" style="border-left-color: var(--red-alert);"><strong>🧬 Karakteristik / Faktor Lapangan:</strong><br><span id="resPenyebabHama">-</span></div>
+                <div class="info-box" style="border-left-color: var(--accent-green);"><strong>✅ Solusi Teknis (Agens / Budidaya):</strong><br><span id="resSolusiHama">-</span></div>
+                <div class="info-box" style="border-left-color: var(--accent-soil);"><strong>🔬 Rekomendasi Insektisida:</strong><br><span id="resMerekHama">-</span></div>
+                <div class="info-box" style="border-left-color: var(--accent-bwd);"><strong>⏱️ Tata Cara & Waktu Aplikasi:</strong><br><span id="resAplikasiHama">-</span></div>
+            </div>
+
+            <div id="boxGulma" style="display:none;">
+                <div id="containerListGulma"></div>
+            </div>
+
+            <div id="boxTanah" style="display:none;">
+                <div class="info-box" style="border-left-color: var(--accent-soil);"><strong>📊 Distribusi Tekstur:</strong><div id="soilList" style="margin-top: 10px;"></div></div>
+                <table></table>
+                <div class="info-box" style="border-left-color: var(--accent-bwd);"><strong>📖 Deskripsi Utama:</strong><br><span id="resPenjelasan">-</span></div>
+                <div class="info-box" style="border-left-color: var(--accent-soil);"><strong>💡 Saran Tanah:</strong><br><span id="resSaranTanah">-</span></div>
+                <canvas id="textureTriangle" width="300" height="250" style="width: 100%; margin-top: 20px; border-radius: 12px;"></canvas>
+            </div>
+
+            <div id="boxBWD" style="display: none; text-align: center;">
+    <div id="cameraContainer" style="position: relative; width: 100%; max-width: 300px; margin: 0 auto; overflow: hidden; border-radius: 20px; background: #000;">
+        <video id="videoElement" autoplay playsinline muted style="width: 100%; height: 300px; object-fit: cover;"></video>
+        
+        <img id="bwdPreviewImage" style="display: none; width: 100%; height: 300px; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 10;">
+        
+        <div id="focusBox" style="position: absolute; top: 25%; left: 42%; width: 16%; height: 50%; border: 3px solid var(--accent-green); border-radius: 8px; box-shadow: 0 0 0 999px rgba(0,0,0,0.5); z-index: 15;"></div>
+    </div>
+    
+    <button class="btn-main" id="btnCapture" style="margin-top: 20px; background: var(--accent-green);">AMBIL DAN ANALISIS DAUN</button>
+    <canvas id="hiddenCanvas" style="display:none;"></canvas>
+    <div id="outputBWD" style="margin-top: 20px; text-align: left;"></div>
+</div>
+
+            <div id="boxMalai" style="display:none;">
+                <div id="listMalai"></div>
+                <div class="info-box" style="border-left-color: var(--accent-malai); background: rgba(255, 118, 117, 0.02);">
+                    <strong>📋 Taksiran Ubinan Komponen Digital:</strong>
+                    <div id="resUbinanTeks" style="font-size:0.85rem; margin-top:5px; line-height:1.5;">
+                        Ambil 3 foto malai padi secara bergantian untuk memunculkan estimasi produktivitas lahan per Hektar.
+                    </div>
+                </div>
+            </div>
+
+            <div id="boxCuaca" style="display:none; text-align: center;">
+               <div id="gpsPrompt" style="padding: 15px 5px;">
+    <div style="font-size: 2.5rem; margin-bottom: 12px;">🛰️</div>
+    <h4 style="margin: 0; color: var(--text-main); font-size: 1.1rem; font-weight: 700;">Akses Lokasi / Lahan Sawah</h4>
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 10px 0 15px; line-height: 1.5;">
+        Kami memerlukan koordinat GPS untuk mengambil data cuaca langsung dari satelit di titik sawah Anda saat ini.
+    </p>
+    
+    <div class="form-group" style="text-align: left; margin-bottom: 24px;">
+        <label style="text-align: center; display: block; margin-bottom: 8px;">📅 MASUKKAN TANGGAL AWAL TANAM</label>
+        <input type="date" id="tglTanamCuaca" class="form-input">
+    </div>
+    <div class="form-group" style="text-align: left; margin-bottom: 24px;">
+    <label style="text-align: center; display: block; margin-bottom: 8px;">🌱 UMUR VARIETAS PADI</label>
+    <select id="umurVarietasCuaca" class="form-select">
+        <option value="genjah">Genjah (< 95 Hari)</option>
+        <option value="sedang" selected>Sedang (95 - 115 Hari)</option>
+        <option value="dalam">Dalam (>= 116 Hari)</option>
+    </select>
+</div>
+    <button class="btn-main btn-live" onclick="aktifkanGPS()">SINKRONKAN GPS & SATELIT</button>
+</div>
+
+                <div id="weatherData" style="display: none; text-align: left;">
+                    <div class="info-box" style="border-left: 4px solid var(--accent-bwd); background: rgba(56, 182, 255, 0.02);">
+                        <strong>📍 Lokasi Koordinat</strong><br>
+                        <span id="lokasiSawah" style="font-size: 0.8rem; opacity: 0.6; font-weight: 600;">-</span><br>
+                        <span id="alamatDesa" style="color: var(--accent-green); font-weight: 700; font-size: 0.9rem; display: inline-block; margin-top: 4px;">Mencari alamat...</span>
+                    </div>
+
+                    <div id="prediksiHujan" class="info-box" style="border-left-color: var(--accent-soil); background: rgba(255, 215, 0, 0.02); display: none;">
+                        <strong>🔮 Prediksi Atmosfer (1 Jam Kedepan)</strong><br>
+                        <span id="hujanNext">-</span>
+                    </div>
+
+                    <div class="forecast-title">🕒 Prakiraan Cuaca Per Jam</div>
+                    <div class="hourly-scroll" id="hourlyForecastContainer"></div>
+
+                    <div class="forecast-title">📅 Prakiraan 7 Hari Kedepan</div>
+                    <div class="daily-list" id="dailyForecastContainer"></div>
+                      
+                    <div id="ensoIodBox" style="display: block; margin-top: 20px; border-radius: 16px; backdrop-filter: blur(12px); background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); padding: 20px;">
+                        <strong style="display: block; margin-bottom: 12px; text-align: center; font-size: 0.95rem; color: #fff;">📈 Proyeksi Iklim Makro</strong>
+                        <div id="ensoStatus" style="font-size: 0.9rem; margin-bottom: 15px; text-align: center; color: #fff; font-weight: 600; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
+                            Mndeteksi fase iklim...
+                        </div>
+                        <div style="position: relative; width: 100%; height: 200px; margin-bottom: 20px;">
+                            <canvas id="macroClimateChart"></canvas>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #94a3b8; text-align: center; display: flex; justify-content: center; gap: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px;">
+                            <span><span style="color:#ff4a5a;">■</span> ENSO (Pasifik)</span>
+                            <span><span style="color:#ffcc00;">■</span> IOD (Hindia)</span>
+                        </div>
+
+                        <div id="localSstBox" style="margin-top: 20px; display: none;">
+                            <strong style="display: block; margin-bottom: 12px; text-align: center; font-size: 0.95rem; color: #fff;">🌊 Suhu Permukaan Laut Lokal</strong>
+                            <div id="localWarningStatus" style="font-size: 0.85rem; margin-bottom: 15px; text-align: center; font-weight: 500; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.3);">
+                                Menganalisis suhu laut lokal...
+                            </div>
+                            <div style="position: relative; width: 100%; height: 200px;">
+                                <canvas id="localSstChart"></canvas>
+                            </div>
+                            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 15px; text-align: center; display: flex; justify-content: center; gap: 15px;">
+                                <span><span style="color:#00ff9d;">■</span> Laut Teluk Bone (°C)</span>
+                                <span><span style="color:#38b6ff;">■</span> Laut Selat Makassar (°C)</span>
+                            </div>
+                        </div> 
+                        
+                        <div id="iklimTerpaduBox"></div>
+                    </div> 
+
+                    <div class="info-box" style="border-left-color: var(--accent-green); padding: 16px; margin-top: 16px;">
+                        <strong>📊 Real-Time Parameter Lahan (Satelit)</strong>
+                        <table style="width: 100%; margin-top: 8px; border: none;">
+                            <tr>
+                                <td style="border: none; padding: 8px 0;">🌧️ Curah Hujan</td>
+                                <td class="row-val"><span id="rainNow">-</span></td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 8px 0;">📊 Akumulasi 30 Hari</td>
+                                <td class="row-val"><span id="rainMonthly">-</span></td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 8px 0;">🌡️ Suhu Udara</td>
+                                <td class="row-val"><span id="suhuNow">-</span></td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 8px 0;">💧 Kelembapan</td>
+                                <td class="row-val"><span id="humidityNow">-</span></td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 8px 0;">💨 Kecepatan Angin</td>
+                                <td class="row-val"><span id="windNow">-</span></td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 8px 0;">⏲️ Tekanan Udara</td>
+                                <td class="row-val"><span id="pressNow">-</span></td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 8px 0;">☁️ Suhu Udara Atas (850hPa)</td>
+                                <td class="row-val"><span id="tempUpper">-</span></td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 8px 0;">💧 Dew Point Spread</td>
+                                <td class="row-val"><span id="dpSpread">-</span></td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 8px 0;">⚡ Energi Badai (CAPE)</td>
+                                <td class="row-val"><span id="capeVal">-</span></td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 8px 0;">🧭 Arah Angin</td>
+                                <td class="row-val"><span id="windDir">-</span></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="info-box" style="border-left-color: var(--accent-green); padding: 6px; margin-top: 16px; overflow: hidden;">
+                        <strong style="margin-left: 10px; margin-top: 10px;">🛰️ Analisis Satelit Mikro Spasial Lahan</strong>
+                        <div style="position: relative; width: 100%; height: 400px; margin-top: 10px; border-radius: 16px; overflow: hidden; border: 1px solid var(--card-border);">
+                            <iframe id="radarMap" width="100%" height="100%" frameborder="0" style="border:0; background: #060913;" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                      
+                    <div class="info-box" id="boxBlastRisk" style="border-left-color: var(--red-alert); margin-top: 16px;">
+                        <strong>⚠️ Risiko Penyakit Tanaman (Blast)</strong><br>
+                        <span id="riskResult" style="display: block; margin-top: 4px;"></span>
+                        
+                    </div>
+                </div> 
+            </div> 
+        </div>
+    </div> 
+                
     <div style="margin-bottom: 80px;"></div>
 
     <footer class="fixed-footer">
         <div>© 2026 Dibuat oleh: <strong>King Mamank</strong> • PPL BPP Bola - Kab. Wajo - Sulsel</div>
     </footer>
 
-    <script src="script.js"></script>
+<button id="btnBukaChat" style="position: fixed; top: 50%; right: 0; transform: translateY(-50%); z-index: 999; padding: 14px 8px; background: #111c2e; color: #10b981; font-weight: 800; border: 1.5px solid #10b981; border-right: none; border-radius: 16px 0 0 16px; cursor: pointer; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: -4px 0 15px rgba(16, 185, 129, 0.4); transition: transform 0.2s ease;">
+    <span style="font-size: 1.5rem; filter: drop-shadow(0 0 5px rgba(16,185,129,0.8));">💬</span>
+    <span style="writing-mode: vertical-rl; text-orientation: mixed; letter-spacing: 1px; font-size: 0.8rem;">KONSULTASI</span>
+</button>
 
+<div id="chatboxAI" style="display: none; position: fixed; bottom: 80px; right: 20px; z-index: 1000; width: 320px; max-height: 500px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+    
+    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+        <span id="chatTitleText" style="color: #10b981; font-weight: bold; letter-spacing: 1px;">Tanya Asisten</span>
+        <button id="btnTutupChat" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer;">
+            TUTUP
+        </button>
+    </div>
+
+    <div id="areaPesan"
+     style="
+     flex:1;
+     overflow-y:auto;
+     padding:15px;
+     display:flex;
+     flex-direction:column;
+     gap:10px;
+     min-height:0;
+">
+        <div style="background: rgba(16, 185, 129, 0.1); color: #e2e8f0; padding: 10px; border-radius: 8px; border-left: 3px solid #10b981; font-size: 0.85rem; line-height: 1.5;">
+            Halo! Ada yang bisa saya bantu terkait masalah pertanian?
+        </div>
+    </div>
+
+    <div style="padding: 15px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05);">
+        <textarea id="inputPesan" placeholder="Ketik pertanyaan di sini..." style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 10px; border-radius: 6px; resize: none; height: 60px; font-family: inherit; margin-bottom: 10px;"></textarea>
+        <button id="btnKirimPesan" style="width: 100%; background: #3b82f6; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">
+            KIRIM PERTANYAAN
+        </button>
+    </div>
+</div>
+
+        <div id="customAlertModal">
+    <div class="modal-card">
+        <div id="customAlertIcon" style="font-size: 2rem; margin-bottom: 12px;">📢</div>
+        <div style="font-size: 0.75rem; color: var(--accent-green); font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase;">NOTIFIKASI SISTEM</div>
+        <p id="customAlertMessage" style="font-size: 0.9rem; color: var(--text-main); margin: 0 0 20px 0; line-height: 1.5; font-weight: 500;"></p>
+        <button onclick="tutupCustomAlert()" style="background: var(--accent-green); color: #060913; border: none; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 0.85rem; width: 100%; cursor: pointer;">OKE</button>
+    </div>
+</div>
 </body>
 </html>
